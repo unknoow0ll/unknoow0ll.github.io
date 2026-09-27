@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rævix.EX</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --neon: #00ff41;
+      --neon-dim: #00c832;
+      --white: #e0ffe0;
+      --bg: #050508;
+      --panel: #0d0d15;
+      --border: #1a2a1a;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--neon);
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      cursor: none;
+    }
+
+    /* CRT Scanlines */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.15) 2px,
+        rgba(0,0,0,0.15) 4px
+      );
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* Screen flicker */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,255,65,0.015);
+      pointer-events: none;
+      z-index: 9997;
+      animation: flicker 8s infinite;
+    }
+
+    @keyframes flicker {
+      0%,100% { opacity: 1; }
+      92% { opacity: 1; }
+      93% { opacity: 0.4; }
+      94% { opacity: 1; }
+      96% { opacity: 0.7; }
+      97% { opacity: 1; }
+    }
+
+    /* ── Sol üst köşe yazısı ── */
+    #corner-tag {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      z-index: 9999;
+      font-family: 'Courier New', monospace;
+      font-size: clamp(0.75rem, 1.5vw, 1.1rem);
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      color: var(--neon);
+      text-shadow:
+        0 0 6px var(--neon),
+        0 0 14px var(--neon),
+        0 0 28px var(--neon);
+      animation: cornerPulse 2.5s ease-in-out infinite, cornerGlitch 7s infinite;
+      pointer-events: none;
+    }
+
+    @keyframes cornerPulse {
+      0%,100% { text-shadow: 0 0 6px var(--neon), 0 0 14px var(--neon), 0 0 28px var(--neon); }
+      50%      { text-shadow: 0 0 12px var(--neon), 0 0 28px var(--neon), 0 0 55px var(--neon); }
+    }
+
+    @keyframes cornerGlitch {
+      0%,88%,100% { transform: none; color: var(--neon); }
+      89% { transform: translate(-3px, 0) skewX(8deg); color: #ff0044; }
+      90% { transform: translate(3px, 0); color: #fff; }
+      91% { transform: none; color: var(--neon); }
+    }
+
+    /* Custom cursor */
+    #cursor {
+      position: fixed;
+      width: 20px; height: 20px;
+      border: 1px solid var(--neon);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s;
+      box-shadow: 0 0 8px var(--neon);
+    }
+
+    /* Digital Rain Canvas */
+    #rain {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      opacity: 0.18;
+    }
+
+    /* Parallax container */
+    #parallax {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 1;
+      transition: transform 0.1s ease-out;
+    }
+
+    /* Scrolling terminal text */
+    .stream {
+      position: fixed;
+      top: 0;
+      white-space: nowrap;
+      font-size: clamp(9px, 1.1vw, 13px);
+      color: var(--neon-dim);
+      opacity: 0.35;
+      z-index: 2;
+      animation: streamMove linear infinite;
+    }
+
+    @keyframes streamMove {
+      from { transform: translateX(110vw); }
+      to   { transform: translateX(-110vw); }
+    }
+
+    .stream-v {
+      position: fixed;
+      left: 0;
+      white-space: nowrap;
+      font-size: clamp(9px, 1vw, 12px);
+      color: #003a10;
+      opacity: 0.5;
+      z-index: 2;
+      writing-mode: vertical-rl;
+      animation: streamMoveV linear infinite;
+    }
+
+    @keyframes streamMoveV {
+      from { transform: translateY(-110vh); }
+      to   { transform: translateY(110vh); }
+    }
+
+    /* Center stage */
+    #center {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 10;
+    }
+
+    #logo {
+      font-size: clamp(3rem, 10vw, 8rem);
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      color: #fff;
+      text-shadow:
+        0 0 10px var(--neon),
+        0 0 30px var(--neon),
+        0 0 60px var(--neon),
+        0 0 100px #00ff4180;
+      animation: logoPulse 3s ease-in-out infinite, glitch 6s infinite;
+      position: relative;
+    }
+
+    @keyframes logoPulse {
+      0%,100% { text-shadow: 0 0 10px var(--neon), 0 0 30px var(--neon), 0 0 60px var(--neon); }
+      50%      { text-shadow: 0 0 20px var(--neon), 0 0 50px var(--neon), 0 0 100px var(--neon), 0 0 150px #00ff4150; }
+    }
+
+    @keyframes glitch {
+      0%,90%,100% { clip-path: none; transform: none; }
+      91% { clip-path: polygon(0 20%,100% 20%,100% 25%,0 25%); transform: translate(-4px,0); }
+      92% { clip-path: polygon(0 60%,100% 60%,100% 65%,0 65%); transform: translate(4px,0); }
+      93% { clip-path: none; transform: none; }
+      95% { clip-path: polygon(0 40%,100% 40%,100% 42%,0 42%); transform: translate(-2px,0); color: #ff0044; }
+      96% { clip-path: none; transform: none; color: #fff; }
+    }
+
+    #init-text {
+      font-size: clamp(0.8rem, 2vw, 1.2rem);
+      color: var(--neon);
+      letter-spacing: 0.3em;
+      margin-top: 1.5rem;
+      min-height: 2em;
+      text-shadow: 0 0 10px var(--neon);
+    }
+
+    #access {
+      font-size: clamp(1rem, 3vw, 2rem);
+      color: #fff;
+      letter-spacing: 0.5em;
+      margin-top: 1rem;
+      opacity: 0;
+      text-shadow: 0 0 20px var(--neon), 0 0 40px var(--neon);
+      animation: none;
+    }
+
+    #access.show {
+      animation: accessGlitch 0.5s forwards, accessPulse 2s 0.5s ease-in-out infinite;
+    }
+
+    @keyframes accessGlitch {
+      0%  { opacity:0; transform: skewX(20deg); color:#ff0044; }
+      30% { opacity:1; transform: skewX(-10deg); color:#fff; }
+      60% { transform: skewX(5deg); }
+      100%{ opacity:1; transform: skewX(0); color:#fff; }
+    }
+
+    @keyframes accessPulse {
+      0%,100% { text-shadow: 0 0 20px var(--neon), 0 0 40px var(--neon); }
+      50%      { text-shadow: 0 0 40px var(--neon), 0 0 80px var(--neon), 0 0 120px var(--neon); }
+    }
+
+    /* Terminal windows */
+    .terminal {
+      position: fixed;
+      background: rgba(5,8,5,0.85);
+      border: 1px solid var(--neon-dim);
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: clamp(8px, 0.9vw, 11px);
+      color: var(--neon-dim);
+      z-index: 5;
+      box-shadow: 0 0 15px rgba(0,255,65,0.15), inset 0 0 20px rgba(0,0,0,0.5);
+      max-width: 280px;
+      backdrop-filter: blur(2px);
+    }
+
+    .terminal-bar {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+
+    .t-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    .t-dot.r { background: #ff5f57; }
+    .t-dot.y { background: #febc2e; }
+    .t-dot.g { background: var(--neon); }
+
+    .terminal-line {
+      line-height: 1.7;
+      opacity: 0;
+      animation: fadeInLine 0.3s forwards;
+    }
+
+    @keyframes fadeInLine {
+      to { opacity: 1; }
+    }
+
+    .t1 { top: 8%; left: 2%; }
+    .t2 { top: 8%; right: 2%; }
+    .t3 { bottom: 8%; left: 2%; }
+    .t4 { bottom: 8%; right: 2%; }
+
+    /* Blinking cursor */
+    .cursor-blink {
+      display: inline-block;
+      width: 8px; height: 1.1em;
+      background: var(--neon);
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+      margin-left: 2px;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    @media (max-width: 600px) {
+      .t1,.t2,.t3,.t4 { display: none; }
+      .stream-v { display: none; }
+      #corner-tag { font-size: 0.65rem; top: 10px; left: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Sol üst köşe -->
+<div id="corner-tag">Rævix.EX SİKER</div>
+
+<div id="cursor"></div>
+<canvas id="rain"></canvas>
+
+<div id="parallax"></div>
+
+<!-- Terminal windows -->
+<div class="terminal t1">
+  <div class="terminal-bar">
+    <div class="t-dot r"></div><div class="t-dot y"></div><div class="t-dot g"></div>
+  </div>
+  <div id="term1"></div>
+</div>
+
+<div class="terminal t2">
+  <div class="terminal-bar">
+    <div class="t-dot r"></div><div class="t-dot y"></div><div class="t-dot g"></div>
+  </div>
+  <div id="term2"></div>
+</div>
+
+<div class="terminal t3">
+  <div class="terminal-bar">
+    <div class="t-dot r"></div><div class="t-dot y"></div><div class="t-dot g"></div>
+  </div>
+  <div id="term3"></div>
+</div>
+
+<div class="terminal t4">
+  <div class="terminal-bar">
+    <div class="t-dot r"></div><div class="t-dot y"></div><div class="t-dot g"></div>
+  </div>
+  <div id="term4"></div>
+</div>
+
+<!-- Center -->
+<div id="center">
+  <div id="logo">Rævix.EX</div>
+  <div id="init-text"><span class="cursor-blink"></span></div>
+  <div id="access">ACCESS GRANTED</div>
+</div>
+
+<script>
+// ── Digital Rain ──────────────────────────────────────────
+const canvas = document.getElementById('rain');
+const ctx = canvas.getContext('2d');
+let cols, drops;
+
+function initRain() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const fs = 14;
+  cols = Math.floor(canvas.width / fs);
+  drops = Array(cols).fill(1);
+}
+
+function drawRain() {
+  ctx.fillStyle = 'rgba(5,5,8,0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#00ff41';
+  ctx.font = '14px Courier New';
+  const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ0x';
+  drops.forEach((y, i) => {
+    const ch = chars[Math.floor(Math.random() * chars.length)];
+    ctx.fillText(ch, i * 14, y * 14);
+    if (y * 14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  });
+}
+
+initRain();
+setInterval(drawRain, 50);
+window.addEventListener('resize', initRain);
+
+// ── Custom Cursor ─────────────────────────────────────────
+const cursorEl = document.getElementById('cursor');
+document.addEventListener('mousemove', e => {
+  cursorEl.style.left = e.clientX + 'px';
+  cursorEl.style.top  = e.clientY + 'px';
+});
+
+// ── Parallax ──────────────────────────────────────────────
+const parallax = document.getElementById('parallax');
+document.addEventListener('mousemove', e => {
+  const x = (e.clientX / window.innerWidth  - 0.5) * 20;
+  const y = (e.clientY / window.innerHeight - 0.5) * 20;
+  parallax.style.transform = `translate(${x}px, ${y}px)`;
+});
+
+// ── Scrolling streams ─────────────────────────────────────
+const streamTexts = [
+  'ACCESSING NODE... SYSTEM CHECK... ENCRYPTION: ACTIVE... CONNECTION ESTABLISHED... 0x4A 0x7F 0x92 0x1B... root@ravix:~$ ... scanning_port_443... packet_received...',
+  'authentication_pending... SYSTEM OVERRIDE... PROCESS RUNNING... 0xFF 0x00 0xAB 0x3C... FIREWALL BYPASSED... ROUTE ESTABLISHED...',
+  '+44 0000 000000 ... +31 000 000 0000 ... +99 000 000000 ... +212 00 00 00 00 00 ... NODE CONNECTED...',
+  'SYN > 192.168.x.x:443 ... ACK < ... DATA TRANSFER... CHECKSUM OK... DECRYPTING PAYLOAD... BUFFER OVERFLOW DETECTED...',
+  '#!/bin/bash ... chmod 777 ... ./exploit.sh ... [OK] ... LOADING MODULE... KERNEL: 5.15.0-ravix...',
+  'PING 0.0.0.0 ... TTL=64 ... 128 bytes from node... TRACEROUTE COMPLETE... VPN: ACTIVE... TOR: ENABLED...',
+];
+
+streamTexts.forEach((txt, i) => {
+  const el = document.createElement('div');
+  el.className = 'stream';
+  el.style.top = (10 + i * 14) + '%';
+  el.style.animationDuration = (18 + i * 5) + 's';
+  el.style.animationDelay = -(i * 3) + 's';
+  el.textContent = txt.repeat(3);
+  parallax.appendChild(el);
+});
+
+// vertical streams
+for (let i = 0; i < 6; i++) {
+  const el = document.createElement('div');
+  el.className = 'stream-v';
+  el.style.left = (5 + i * 16) + '%';
+  el.style.animationDuration = (12 + i * 4) + 's';
+  el.style.animationDelay = -(i * 2) + 's';
+  el.textContent = '01アイウ0xFF10110xAB01'.repeat(10);
+  parallax.appendChild(el);
+}
+
+// ── Terminal windows ──────────────────────────────────────
+const termData = {
+  term1: [
+    'root@ravix:~$ init --secure',
+    '[OK] KERNEL LOADED',
+    '[OK] NET INTERFACE UP',
+    'ENCRYPTION: AES-256 ACTIVE',
+    'root@ravix:~$ █',
+  ],
+  term2: [
+    'SCANNING NODES...',
+    '> NODE_01 ... ONLINE',
+    '> NODE_02 ... ONLINE',
+    '> NODE_03 ... TIMEOUT',
+    'RETRY NODE_03...',
+    'CONNECTED: 2/3 █',
+  ],
+  term3: [
+    '+44 0000 000000  [DEMO]',
+    '+31 000 000 0000 [DEMO]',
+    '+99 000 000000   [DEMO]',
+    '+212 00 00 00 00 [DEMO]',
+    'ROUTING TABLE: OK █',
+  ],
+  term4: [
+    '0x4A 0x7F 0x92 0x1B',
+    '0xFF 0x00 0xAB 0x3C',
+    'CHECKSUM: VALID',
+    'PACKET LOSS: 0%',
+    'LATENCY: 4ms █',
+  ],
+};
+
+function populateTerminal(id, lines) {
+  const el = document.getElementById(id);
+  lines.forEach((line, i) => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = 'terminal-line';
+      div.style.animationDelay = '0s';
+      div.textContent = line;
+      el.appendChild(div);
+    }, i * 400);
+  });
+}
+
+Object.entries(termData).forEach(([id, lines]) => populateTerminal(id, lines));
+
+// ── Center typing animation ───────────────────────────────
+const initEl   = document.getElementById('init-text');
+const accessEl = document.getElementById('access');
+
+function typeText(el, text, cb) {
+  el.innerHTML = '';
+  let i = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor-blink';
+  el.appendChild(cursor);
+
+  const iv = setInterval(() => {
+    el.insertBefore(document.createTextNode(text[i]), cursor);
+    i++;
+    if (i >= text.length) {
+      clearInterval(iv);
+      if (cb) setTimeout(cb, 600);
+    }
+  }, 60);
+}
+
+setTimeout(() => {
+  typeText(initEl, 'INITIALIZING SYSTEM...', () => {
+    setTimeout(() => {
+      typeText(initEl, 'LOADING MODULES... OK', () => {
+        setTimeout(() => {
+          typeText(initEl, 'VERIFYING IDENTITY...', () => {
+            setTimeout(() => {
+              initEl.textContent = 'SYSTEM READY';
+              accessEl.classList.add('show');
+            }, 800);
+          });
+        }, 500);
+      });
+    }, 500);
+  });
+}, 1200);
+</script>
+</body>
+</html>
