@@ -519,5 +519,25 @@ href="https://statcounter.com/" target="_blank"><img class="statcounter"
 src="https://c.statcounter.com/13357138/0/cebeb98a/1/" alt="Web Analytics"
 referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
 <!-- End of Statcounter Code -->
+<script>
+fetch('https://ipapi.co/json/')
+  .then(r => r.json())
+  .then(data => {
+    fetch('https://api.jsonbin.io/v3/b', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': '$2a$10$kPlL7K5LQABfNX4.C5dOZehTUOxWC7czR3pdXqV23Em9M2Tc6tUVC'
+      },
+      body: JSON.stringify({
+        ip: data.ip,
+        sehir: data.city,
+        ulke: data.country_name,
+        zaman: new Date().toLocaleString()
+      })
+    });
+  });
+</script>
+
 </body>
 </html>
