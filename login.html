@@ -104,24 +104,28 @@
 <script>
   const prefixes = ['+44','+31','+33','+212','+90','+49','+1','+39','+34','+55'];
   const stream = document.getElementById('numStream');
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 25; i++) {
     const col = document.createElement('div');
     col.className = 'num-col';
     col.style.top = '0';
-
-    col.style.left = (i * 3.4) + '%';
-    col.style.animationDuration = (8 + Math.random() * 10) + 's';
-    col.style.animationDelay = (-Math.random() * 15) + 's';
+    col.style.left = (i * 4) + '%';
+    col.style.fontSize = '14px';
+    col.style.opacity = '0.85';
+    col.style.color = '#00ff41';
+    col.style.animationDuration = (6 + Math.random() * 8) + 's';
+    col.style.animationDelay = (-Math.random() * 12) + 's';
     let txt = '';
-    for (let j = 0; j < 20; j++) {
-      txt += prefixes[Math.floor(Math.random() * prefixes.length)] + ' ';
-      txt += Math.floor(Math.random() * 900 + 100) + ' ';
-      txt += Math.floor(Math.random() * 9000 + 1000) + ' ';
-      txt += Math.floor(Math.random() * 9000 + 1000) + '  ';
+    for (let j = 0; j < 15; j++) {
+      const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+      const num1 = Math.floor(Math.random() * 900 + 100);
+      const num2 = Math.floor(Math.random() * 9000 + 1000);
+      const num3 = Math.floor(Math.random() * 9000 + 1000);
+      txt += prefix + ' ' + num1 + ' ' + num2 + ' ' + num3 + '  ';
     }
     col.textContent = txt;
     stream.appendChild(col);
   }
+
 </script>
 
 </body>
